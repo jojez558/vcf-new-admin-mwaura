@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  <div class="page-wrapper center-page">
+    <div class="card login-card">
+      <div class="login-logo">🔐</div>
+      <h1 class="login-title">Admin Login</h1>
+      <p class="login-subtitle">Sign in to manage contacts</p>
+
+      <div id="login-feedback" class="feedback hidden"></div>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="admin" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary full-width" onclick="doLogin()">Sign In</button>
+
+      <a href="/" class="back-link">← Back to Homepage</a>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    async function doLogin() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const fb = document.getElementById('login-feedback');
+
+      if (!username || !password) {
+        showFeedback(fb, '⚠️ Please enter username and password.', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/admin/dashboard';
+        } else {
+          showFeedback(fb, '❌ ' + data.error, 'error');
+        }
+      } catch {
+        showFeedback(fb, '❌ Connection error. Try again.', 'error');
+      }
+    }
+
+    function showFeedback(el, msg, type) {
+      el.textContent = msg;
+      el.className = 'feedback ' + type;
+    }
+  </script>
+</body>
+</html>

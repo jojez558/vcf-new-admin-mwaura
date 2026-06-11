@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Contact</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <!-- Hero Section -->
+      <main class="hero">
+        <div class="card">
+          <div class="avatar" id="avatar">A</div>
+          <h1 class="admin-name" id="admin-name">Loading…</h1>
+          <p class="admin-phone" id="admin-phone">—</p>
+
+          <!-- Submission Counter -->
+          <div class="submission-counter" id="submission-counter">
+            <div class="count-header">
+              <span class="count-text">— out of 1000 slots filled</span>
+              <span class="count-pct">0%</span>
+            </div>
+            <div class="count-bar">
+              <div class="count-bar-fill" style="width: 0%"></div>
+            </div>
+            <p class="count-hint">Save the contact below to share yours</p>
+          </div>
+
+          <div class="btn-group">
+            <button
+              class="btn btn-primary"
+              id="save-btn"
+              onclick="saveContact()"
+            >
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+                />
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+              </svg>
+              Save Admin Contact
+            </button>
+
+            <button
+              class="btn btn-secondary"
+              id="copy-btn"
+              onclick="copyPhone()"
+            >
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path
+                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                />
+              </svg>
+              Copy Phone Number
+            </button>
+          </div>
+
+          <div id="copy-feedback" class="feedback hidden"></div>
+        </div>
+      </main>
+
+      <!-- Opt-in Form — hidden until user saves the admin contact -->
+      <section class="form-section" id="form-section" style="display: none">
+        <div class="form-card">
+          <div class="form-icon">🤝</div>
+          <h2>Share Your Contact</h2>
+          <p class="form-subtitle">
+            Optionally share your details with the administrator.
+          </p>
+
+          <div id="form-feedback" class="feedback hidden"></div>
+
+          <div class="field">
+            <label for="fullName">Full Name</label>
+            <input
+              type="text"
+              id="fullName"
+              placeholder="Jane Doe"
+              autocomplete="name"
+            />
+          </div>
+          <div class="field">
+            <label for="phoneNumber">Phone Number</label>
+            <input
+              type="tel"
+              id="phoneNumber"
+              placeholder="+254 700 000 000"
+              autocomplete="tel"
+            />
+          </div>
+          <div class="consent-row">
+            <input type="checkbox" id="consent" />
+            <label for="consent"
+              >I agree to share my contact information with the
+              administrator.</label
+            >
+          </div>
+          <button class="btn btn-primary full-width" onclick="submitContact()">
+            Submit My Contact
+          </button>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <a href="/admin/dashboard" class="footer-link">Admin Dashboard</a>
+      </footer>
+    </div>
+
+    <script src="/js/main.js"></script>
+  </body>
+</html>

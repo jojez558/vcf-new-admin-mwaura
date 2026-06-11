@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  <div class="dash-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-icon">📋</span>
+        <span class="logo-text">ContactAdmin</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active">Contacts</a>
+        <a href="/" class="nav-item">← Homepage</a>
+      </nav>
+      <button class="btn btn-outline logout-btn" onclick="doLogout()">Logout</button>
+    </aside>
+
+    <!-- Main -->
+    <main class="dash-main">
+      <div class="dash-header">
+        <div>
+          <h1 class="dash-title">Submitted Contacts</h1>
+          <p class="dash-subtitle">Users who voluntarily shared their contact.</p>
+        </div>
+        <div class="stat-badge" id="total-badge">0 contacts</div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="search-input" type="text" placeholder="Search name or phone…" oninput="debounceSearch()" />
+        </div>
+        <div class="export-btns">
+          <a href="/admin/export/vcf" class="btn btn-sm btn-outline">Export VCF</a>
+          <a href="/admin/export/csv" class="btn btn-sm btn-outline">Export CSV</a>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table class="contacts-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Phone Number</th>
+              <th>Submitted</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="contacts-body">
+            <tr><td colspan="5" class="loading-row">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </main>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    let searchQuery = '';
+    let debounceTimer;
+
+    async function loadContacts(page = 1, search = '') {
+      currentPage = page;
+      const res = await fetch(`/admin/contacts?page=${page}&search=${encodeURIComponent(search)}&limit=15`);
+      const data = await res.json();
+
+      document.getElementById('total-badge').textContent = `${data.total} contact${data.total !== 1 ? 's' : ''}`;
+
+      const tbody = document.getElementById('contacts-body');
+      if (!data.contacts.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No contacts found.</td></tr>';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = data.contacts.map((c, i) => `
+        <tr>
+          <td class="row-num">${(page - 1) * 15 + i + 1}</td>
+          <td class="name-cell">${escHtml(c.fullName)}</td>
+          <td class="phone-cell"><a href="tel:${escHtml(c.phoneNumber)}">${escHtml(c.phoneNumber)}</a></td>
+          <td class="date-cell">${new Date(c.submittedAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteContact('${c._id}', this)">Delete</button></td>
+        </tr>
+      `).join('');
+
+      renderPagination(data.pages, page);
+    }
+
+    function renderPagination(pages, current) {
+      const el = document.getElementById('pagination');
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      let html = '';
+      for (let i = 1; i <= pages; i++) {
+        html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="loadContacts(${i}, searchQuery)">${i}</button>`;
+      }
+      el.innerHTML = html;
+    }
+
+    async function deleteContact(id, btn) {
+      if (!confirm('Delete this contact?')) return;
+      btn.disabled = true;
+      btn.textContent = '…';
+      const res = await fetch(`/admin/contacts/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) loadContacts(currentPage, searchQuery);
+    }
+
+    function debounceSearch() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        searchQuery = document.getElementById('search-input').value.trim();
+        loadContacts(1, searchQuery);
+      }, 350);
+    }
+
+    async function doLogout() {
+      await fetch('/admin/logout', { method: 'POST' });
+      window.location.href = '/admin/login-page';
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    loadContacts();
+  </script>
+</body>
+</html>

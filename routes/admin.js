@@ -12,12 +12,12 @@ async function ensureAdmin() {
   if (count === 0) {
     const admin = new Admin({
       username: "admin",
-      password: "@jojez05",
-      name: "George Mwaura",
-      phone: "+254 738 026 731",
+      password: "Admin@1234",
+      name: "Alex Johnson",
+      phone: "+254 712 345 678",
     });
     await admin.save();
-    console.log("Default admin created: username=admin, password=@jojez05");
+    console.log("Default admin created: username=admin, password=Admin@1234");
   }
 }
 ensureAdmin();
@@ -92,6 +92,70 @@ router.delete("/contacts/:id", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Server error." });
+  }
+});
+
+// Bulk import contacts (admin only - already protected by authMiddleware)
+router.post("/bulk-import", async (req, res) => {
+  try {
+    const MAX_CONTACTS = 1000;
+    const { entries } = req.body; // [{ fullName, phoneNumber }, ...]
+
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return res.status(400).json({ error: "No entries provided." });
+    }
+
+    let currentCount = await Contact.countDocuments();
+    let added = 0,
+      duplicates = 0,
+      invalid = 0,
+      capped = 0;
+
+    for (const entry of entries) {
+      if (currentCount >= MAX_CONTACTS) {
+        capped++;
+        continue;
+      }
+
+      const phone = (entry.phoneNumber || "").trim();
+      const name = (entry.fullName || "").trim() || "Unknown";
+
+      if (!phone || phone.length < 7) {
+        invalid++;
+        continue;
+      }
+
+      const exists = await Contact.findOne({ phoneNumber: phone });
+      if (exists) {
+        duplicates++;
+        continue;
+      }
+
+      try {
+        await Contact.create({
+          fullName: name,
+          phoneNumber: phone,
+          consentGiven: true,
+        });
+        added++;
+        currentCount++;
+      } catch (e) {
+        if (e.code === 11000) duplicates++;
+        else invalid++;
+      }
+    }
+
+    res.json({
+      success: true,
+      added,
+      duplicates,
+      invalid,
+      capped,
+      total: Math.min(currentCount, MAX_CONTACTS),
+      max: MAX_CONTACTS,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Server error: " + err.message });
   }
 });
 

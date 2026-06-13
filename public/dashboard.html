@@ -1,142 +1,461 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/main.css" />
-</head>
-<body>
-  <div class="dash-wrapper">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <span class="logo-icon">📋</span>
-        <span class="logo-text">ContactAdmin</span>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="#" class="nav-item active">Contacts</a>
-        <a href="/" class="nav-item">← Homepage</a>
-      </nav>
-      <button class="btn btn-outline logout-btn" onclick="doLogout()">Logout</button>
-    </aside>
-
-    <!-- Main -->
-    <main class="dash-main">
-      <div class="dash-header">
-        <div>
-          <h1 class="dash-title">Submitted Contacts</h1>
-          <p class="dash-subtitle">Users who voluntarily shared their contact.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <div class="dash-wrapper">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <span class="logo-icon">📋</span>
+          <span class="logo-text">ContactAdmin</span>
         </div>
-        <div class="stat-badge" id="total-badge">0 contacts</div>
-      </div>
+        <nav class="sidebar-nav">
+          <a
+            href="#"
+            class="nav-item active"
+            id="nav-contacts"
+            onclick="showTab('contacts')"
+            >Contacts</a
+          >
+          <a href="#" class="nav-item" id="nav-bulk" onclick="showTab('bulk')"
+            >Bulk Import</a
+          >
+          <a href="/" class="nav-item">← Homepage</a>
+        </nav>
+        <button class="btn btn-outline logout-btn" onclick="doLogout()">
+          Logout
+        </button>
+      </aside>
 
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="search-wrap">
-          <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input class="search-input" id="search-input" type="text" placeholder="Search name or phone…" oninput="debounceSearch()" />
+      <!-- Main -->
+      <main class="dash-main">
+        <!-- ===== Contacts Tab ===== -->
+        <div id="tab-contacts">
+          <div class="dash-header">
+            <div>
+              <h1 class="dash-title">Submitted Contacts</h1>
+              <p class="dash-subtitle">
+                Users who voluntarily shared their contact.
+              </p>
+            </div>
+            <div class="stat-badge" id="total-badge">0 contacts</div>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="toolbar">
+            <div class="search-wrap">
+              <svg
+                class="search-icon"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                class="search-input"
+                id="search-input"
+                type="text"
+                placeholder="Search name or phone…"
+                oninput="debounceSearch()"
+              />
+            </div>
+            <div class="export-btns">
+              <a href="/admin/export/vcf" class="btn btn-sm btn-outline"
+                >Export VCF</a
+              >
+              <a href="/admin/export/csv" class="btn btn-sm btn-outline"
+                >Export CSV</a
+              >
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="table-wrap">
+            <table class="contacts-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Phone Number</th>
+                  <th>Submitted</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="contacts-body">
+                <tr>
+                  <td colspan="5" class="loading-row">Loading…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination"></div>
         </div>
-        <div class="export-btns">
-          <a href="/admin/export/vcf" class="btn btn-sm btn-outline">Export VCF</a>
-          <a href="/admin/export/csv" class="btn btn-sm btn-outline">Export CSV</a>
+
+        <!-- ===== Bulk Import Tab ===== -->
+        <div id="tab-bulk" style="display: none">
+          <div class="dash-header">
+            <div>
+              <h1 class="dash-title">Bulk Import Contacts</h1>
+              <p class="dash-subtitle">
+                Add multiple contacts at once — by pasting text or scanning
+                screenshots.
+              </p>
+            </div>
+          </div>
+
+          <div class="bulk-card">
+            <h3 class="bulk-section-title">📷 Scan Screenshots (Optional)</h3>
+            <p class="bulk-hint">
+              Upload one or more screenshots containing names/numbers. Text will
+              be extracted and added to the box below for review.
+            </p>
+            <input
+              type="file"
+              id="image-input"
+              accept="image/*"
+              multiple
+              class="file-input"
+            />
+            <button
+              class="btn btn-sm btn-outline"
+              onclick="scanImages()"
+              id="scan-btn"
+            >
+              Scan Images
+            </button>
+            <div id="scan-status" class="bulk-status hidden"></div>
+          </div>
+
+          <div class="bulk-card">
+            <h3 class="bulk-section-title">✏️ Paste / Edit Contacts</h3>
+            <p class="bulk-hint">
+              One contact per line. Format: <code>Name, Phone</code> or just
+              <code>Phone</code> on its own.<br />
+              Example:<br />
+              <code>John Doe, 0712345678</code><br />
+              <code>0798765432</code>
+            </p>
+            <textarea
+              id="bulk-text"
+              class="bulk-textarea"
+              rows="10"
+              placeholder="John Doe, 0712345678&#10;Jane, +254700111222&#10;0733444555"
+            ></textarea>
+
+            <div class="bulk-actions">
+              <button class="btn btn-sm btn-outline" onclick="previewBulk()">
+                Preview
+              </button>
+              <button
+                class="btn btn-primary"
+                onclick="importBulk()"
+                id="import-btn"
+              >
+                Import to Database
+              </button>
+            </div>
+
+            <div id="bulk-feedback" class="feedback hidden"></div>
+          </div>
+
+          <!-- Preview Table -->
+          <div class="bulk-card" id="preview-card" style="display: none">
+            <h3 class="bulk-section-title">
+              👀 Preview (<span id="preview-count">0</span> entries)
+            </h3>
+            <div class="table-wrap">
+              <table class="contacts-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Phone Number</th>
+                  </tr>
+                </thead>
+                <tbody id="preview-body"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
+    </div>
 
-      <!-- Table -->
-      <div class="table-wrap">
-        <table class="contacts-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Phone Number</th>
-              <th>Submitted</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="contacts-body">
-            <tr><td colspan="5" class="loading-row">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-      <!-- Pagination -->
-      <div class="pagination" id="pagination"></div>
-    </main>
-  </div>
+    <script>
+      let currentPage = 1;
+      let searchQuery = "";
+      let debounceTimer;
 
-  <script>
-    let currentPage = 1;
-    let searchQuery = '';
-    let debounceTimer;
-
-    async function loadContacts(page = 1, search = '') {
-      currentPage = page;
-      const res = await fetch(`/admin/contacts?page=${page}&search=${encodeURIComponent(search)}&limit=15`);
-      const data = await res.json();
-
-      document.getElementById('total-badge').textContent = `${data.total} contact${data.total !== 1 ? 's' : ''}`;
-
-      const tbody = document.getElementById('contacts-body');
-      if (!data.contacts.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No contacts found.</td></tr>';
-        document.getElementById('pagination').innerHTML = '';
-        return;
+      /* ===== Tab Switching ===== */
+      function showTab(tab) {
+        document.getElementById("tab-contacts").style.display =
+          tab === "contacts" ? "block" : "none";
+        document.getElementById("tab-bulk").style.display =
+          tab === "bulk" ? "block" : "none";
+        document
+          .getElementById("nav-contacts")
+          .classList.toggle("active", tab === "contacts");
+        document
+          .getElementById("nav-bulk")
+          .classList.toggle("active", tab === "bulk");
       }
 
-      tbody.innerHTML = data.contacts.map((c, i) => `
+      /* ===== Contacts List ===== */
+      async function loadContacts(page = 1, search = "") {
+        currentPage = page;
+        const res = await fetch(
+          `/admin/contacts?page=${page}&search=${encodeURIComponent(search)}&limit=15`,
+        );
+        const data = await res.json();
+
+        document.getElementById("total-badge").textContent =
+          `${data.total} contact${data.total !== 1 ? "s" : ""}`;
+
+        const tbody = document.getElementById("contacts-body");
+        if (!data.contacts.length) {
+          tbody.innerHTML =
+            '<tr><td colspan="5" class="empty-row">No contacts found.</td></tr>';
+          document.getElementById("pagination").innerHTML = "";
+          return;
+        }
+
+        tbody.innerHTML = data.contacts
+          .map(
+            (c, i) => `
         <tr>
           <td class="row-num">${(page - 1) * 15 + i + 1}</td>
           <td class="name-cell">${escHtml(c.fullName)}</td>
           <td class="phone-cell"><a href="tel:${escHtml(c.phoneNumber)}">${escHtml(c.phoneNumber)}</a></td>
-          <td class="date-cell">${new Date(c.submittedAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+          <td class="date-cell">${new Date(c.submittedAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</td>
           <td><button class="btn btn-sm btn-danger" onclick="deleteContact('${c._id}', this)">Delete</button></td>
         </tr>
-      `).join('');
+      `,
+          )
+          .join("");
 
-      renderPagination(data.pages, page);
-    }
-
-    function renderPagination(pages, current) {
-      const el = document.getElementById('pagination');
-      if (pages <= 1) { el.innerHTML = ''; return; }
-      let html = '';
-      for (let i = 1; i <= pages; i++) {
-        html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="loadContacts(${i}, searchQuery)">${i}</button>`;
+        renderPagination(data.pages, page);
       }
-      el.innerHTML = html;
-    }
 
-    async function deleteContact(id, btn) {
-      if (!confirm('Delete this contact?')) return;
-      btn.disabled = true;
-      btn.textContent = '…';
-      const res = await fetch(`/admin/contacts/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) loadContacts(currentPage, searchQuery);
-    }
+      function renderPagination(pages, current) {
+        const el = document.getElementById("pagination");
+        if (pages <= 1) {
+          el.innerHTML = "";
+          return;
+        }
+        let html = "";
+        for (let i = 1; i <= pages; i++) {
+          html += `<button class="page-btn ${i === current ? "active" : ""}" onclick="loadContacts(${i}, searchQuery)">${i}</button>`;
+        }
+        el.innerHTML = html;
+      }
 
-    function debounceSearch() {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        searchQuery = document.getElementById('search-input').value.trim();
-        loadContacts(1, searchQuery);
-      }, 350);
-    }
+      async function deleteContact(id, btn) {
+        if (!confirm("Delete this contact?")) return;
+        btn.disabled = true;
+        btn.textContent = "…";
+        const res = await fetch(`/admin/contacts/${id}`, { method: "DELETE" });
+        const data = await res.json();
+        if (data.success) loadContacts(currentPage, searchQuery);
+      }
 
-    async function doLogout() {
-      await fetch('/admin/logout', { method: 'POST' });
-      window.location.href = '/admin/login-page';
-    }
+      function debounceSearch() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          searchQuery = document.getElementById("search-input").value.trim();
+          loadContacts(1, searchQuery);
+        }, 350);
+      }
 
-    function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+      async function doLogout() {
+        await fetch("/admin/logout", { method: "POST" });
+        window.location.href = "/admin/login-page";
+      }
 
-    loadContacts();
-  </script>
-</body>
+      function escHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      /* ===== Bulk Import ===== */
+
+      // Parse textarea lines into {fullName, phoneNumber}
+      function parseBulkText(text) {
+        const phoneRegex = /(\+?\d[\d\s\-\(\)]{6,}\d)/;
+        const lines = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0);
+        const entries = [];
+        let clientCounter = 1;
+
+        for (const line of lines) {
+          const match = line.match(phoneRegex);
+          if (!match) continue;
+
+          let phone = match[1].replace(/[\s\-\(\)]/g, ""); // normalize
+          let name = line
+            .replace(match[1], "")
+            .replace(/^[,\-\s]+|[,\-\s]+$/g, "")
+            .trim();
+          if (!name) {
+            name = `Client ${clientCounter}`;
+            clientCounter++;
+          }
+
+          entries.push({ fullName: name, phoneNumber: phone });
+        }
+        return entries;
+      }
+
+      function previewBulk() {
+        const text = document.getElementById("bulk-text").value;
+        const entries = parseBulkText(text);
+        const card = document.getElementById("preview-card");
+        const body = document.getElementById("preview-body");
+
+        document.getElementById("preview-count").textContent = entries.length;
+
+        if (entries.length === 0) {
+          card.style.display = "block";
+          body.innerHTML =
+            '<tr><td colspan="3" class="empty-row">No valid entries found. Make sure each line has a phone number.</td></tr>';
+          return;
+        }
+
+        card.style.display = "block";
+        body.innerHTML = entries
+          .map(
+            (e, i) => `
+        <tr>
+          <td class="row-num">${i + 1}</td>
+          <td class="name-cell">${escHtml(e.fullName)}</td>
+          <td class="phone-cell">${escHtml(e.phoneNumber)}</td>
+        </tr>
+      `,
+          )
+          .join("");
+      }
+
+      async function importBulk() {
+        const text = document.getElementById("bulk-text").value;
+        const entries = parseBulkText(text);
+        const fb = document.getElementById("bulk-feedback");
+        const btn = document.getElementById("import-btn");
+
+        if (entries.length === 0) {
+          showBulkFeedback(
+            fb,
+            "⚠️ No valid entries found. Add at least one line with a phone number.",
+            "error",
+          );
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Importing…";
+
+        try {
+          const res = await fetch("/admin/bulk-import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ entries }),
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            showBulkFeedback(
+              fb,
+              `✅ Imported ${data.added} new contact(s). ${data.duplicates} duplicate(s) skipped, ${data.invalid} invalid, ${data.capped} skipped (max reached). Total: ${data.total}/${data.max}.`,
+              "success",
+            );
+            document.getElementById("bulk-text").value = "";
+            document.getElementById("preview-card").style.display = "none";
+            loadContacts(1, "");
+          } else {
+            showBulkFeedback(fb, "❌ " + data.error, "error");
+          }
+        } catch {
+          showBulkFeedback(
+            fb,
+            "❌ Connection error. Please try again.",
+            "error",
+          );
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Import to Database";
+        }
+      }
+
+      function showBulkFeedback(el, msg, type) {
+        el.textContent = msg;
+        el.className = "feedback " + type;
+      }
+
+      /* ===== Screenshot OCR ===== */
+      async function scanImages() {
+        const input = document.getElementById("image-input");
+        const status = document.getElementById("scan-status");
+        const scanBtn = document.getElementById("scan-btn");
+        const textarea = document.getElementById("bulk-text");
+
+        if (!input.files || input.files.length === 0) {
+          status.className = "bulk-status error";
+          status.textContent = "⚠️ Please choose at least one image first.";
+          return;
+        }
+
+        scanBtn.disabled = true;
+        let allText = "";
+
+        for (let i = 0; i < input.files.length; i++) {
+          status.className = "bulk-status";
+          status.textContent = `🔍 Scanning image ${i + 1} of ${input.files.length}…`;
+
+          try {
+            const result = await Tesseract.recognize(input.files[i], "eng");
+            allText += result.data.text + "\n";
+          } catch (e) {
+            status.textContent = "❌ Failed to scan image " + (i + 1);
+          }
+        }
+
+        // Append extracted text to textarea for review
+        textarea.value =
+          (textarea.value ? textarea.value + "\n" : "") + allText.trim();
+
+        status.className = "bulk-status success";
+        status.textContent =
+          "✅ Text extracted! Review and edit below before importing.";
+        scanBtn.disabled = false;
+
+        // Auto preview
+        previewBulk();
+      }
+
+      // Init
+      loadContacts();
+    </script>
+  </body>
 </html>
